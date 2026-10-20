@@ -1,0 +1,28 @@
+name: Update song list
+
+on:
+  schedule:
+    - cron: "17 6 1 * *"   # 06:17 UTC on the 1st of every month
+  workflow_dispatch:        # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download songs from VocaDB
+        run: python scripts/fetch_songs.py
+      - name: Commit if the list changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add songs.json
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Update song list from VocaDB"
+          git push
